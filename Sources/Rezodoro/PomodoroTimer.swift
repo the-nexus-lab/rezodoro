@@ -4,10 +4,29 @@ import AppKit
 import UserNotifications
 
 final class PomodoroTimer: ObservableObject {
-    @Published var focusMinutes: Int = 25 { didSet { resetIfIdle() } }
-    @Published var shortBreakMinutes: Int = 5 { didSet { resetIfIdle() } }
-    @Published var longBreakMinutes: Int = 15 { didSet { resetIfIdle() } }
-    @Published var sessionsUntilLongBreak: Int = 4
+    @Published var focusMinutes: Int = 25 {
+        didSet {
+            resetIfIdle()
+            logSettingChange("focusMinutes", focusMinutes, oldValue)
+        }
+    }
+    @Published var shortBreakMinutes: Int = 5 {
+        didSet {
+            resetIfIdle()
+            logSettingChange("shortBreakMinutes", shortBreakMinutes, oldValue)
+        }
+    }
+    @Published var longBreakMinutes: Int = 15 {
+        didSet {
+            resetIfIdle()
+            logSettingChange("longBreakMinutes", longBreakMinutes, oldValue)
+        }
+    }
+    @Published var sessionsUntilLongBreak: Int = 4 {
+        didSet {
+            logSettingChange("sessionsUntilLongBreak", sessionsUntilLongBreak, oldValue)
+        }
+    }
 
     @Published private(set) var currentKind: SessionKind = .focus
     @Published private(set) var remainingSeconds: Int = 25 * 60
@@ -22,8 +41,10 @@ final class PomodoroTimer: ObservableObject {
     private var timer: Timer?
     private var sessionStartedAt: Date?
     private let log = LogStore()
+    private let events = EventStore()
 
     var logFileURL: URL { log.logFileURL }
+    var eventsFileURL: URL { events.eventsFileURL }
 
     func exportCSVAndReturn(to destination: URL) throws {
         try log.exportCSV(to: destination)
@@ -62,6 +83,7 @@ final class PomodoroTimer: ObservableObject {
             }
         }
         remainingSeconds = focusMinutes * 60
+        events.append(ActionEvent(type: .appLaunched))
     }
 
     private func resetIfIdle() {
@@ -69,8 +91,27 @@ final class PomodoroTimer: ObservableObject {
         remainingSeconds = plannedMinutes * 60
     }
 
+    private func logSettingChange(_ name: String, _ newValue: Int, _ oldValue: Int) {
+        guard newValue != oldValue else { return }
+        events.append(ActionEvent(type: .settingsChanged, settingName: name, settingValue: newValue))
+    }
+
+    func logQuit() {
+        events.append(currentEvent(.appQuit))
+    }
+
+    private func currentEvent(_ type: ActionType) -> ActionEvent {
+        ActionEvent(
+            type: type,
+            sessionKind: currentKind,
+            plannedMinutes: plannedMinutes,
+            remainingSeconds: remainingSeconds
+        )
+    }
+
     func start() {
         guard !isRunning else { return }
+        let isResuming = sessionStartedAt != nil
         if sessionStartedAt == nil {
             sessionStartedAt = Date()
         }
@@ -78,12 +119,15 @@ final class PomodoroTimer: ObservableObject {
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             self?.tick()
         }
+        events.append(currentEvent(isResuming ? .resume : .start))
     }
 
     func pause() {
+        guard isRunning else { return }
         isRunning = false
         timer?.invalidate()
         timer = nil
+        events.append(currentEvent(.pause))
     }
 
     func toggle() {
@@ -91,7 +135,11 @@ final class PomodoroTimer: ObservableObject {
     }
 
     func reset() {
+        let wasRunning = isRunning
         pause()
+        if wasRunning || sessionStartedAt != nil {
+            events.append(currentEvent(.reset))
+        }
         sessionStartedAt = nil
         remainingSeconds = plannedMinutes * 60
     }
@@ -109,7 +157,10 @@ final class PomodoroTimer: ObservableObject {
     }
 
     private func finishSession(completed: Bool) {
-        pause()
+        isRunning = false
+        timer?.invalidate()
+        timer = nil
+
         let start = sessionStartedAt ?? Date()
         log.append(LogEntry(
             kind: currentKind,
@@ -118,6 +169,7 @@ final class PomodoroTimer: ObservableObject {
             plannedMinutes: plannedMinutes,
             completed: completed
         ))
+        events.append(currentEvent(completed ? .complete : .skip))
 
         if currentKind == .focus {
             completedFocusSessions += 1

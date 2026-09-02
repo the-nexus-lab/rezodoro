@@ -9,6 +9,11 @@ A tiny Pomodoro timer that lives in the macOS menu bar. No frills.
 - Every completed or skipped session is auto-logged to
   `~/Library/Application Support/Rezodoro/sessions.csv`
 - "Export Logs as CSV…" saves a copy of that log anywhere you like
+- Every discrete action (start, pause, resume, skip, complete, reset,
+  settings change, app launch/quit) is separately timestamped to
+  `~/Library/Application Support/Rezodoro/events.jsonl` — a richer,
+  background record for future usage analysis (idle gaps between
+  sessions, skip/reset frequency, etc). Not shown in the CSV export.
 - System notification when a session ends
 
 ## Build & run
@@ -33,7 +38,10 @@ start at login, add it in System Settings → General → Login Items.
 ## Notes
 
 - It's a menu-bar-only app (no Dock icon) — quit it from the dropdown menu.
-- Log format: `kind,started_at,ended_at,planned_minutes,actual_minutes,completed`
+- CSV log format: `kind,started_at,ended_at,planned_minutes,actual_minutes,completed`
+- Event log format (JSONL, one JSON object per line):
+  `type, timestamp, sessionKind, plannedMinutes, remainingSeconds, settingName, settingValue`
+  (fields are present only when relevant to that event type)
 
 ## License
 
