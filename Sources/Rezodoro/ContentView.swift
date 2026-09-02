@@ -51,12 +51,16 @@ struct ContentView: View {
 
             Divider()
 
-            Button("Export Logs as CSV…") {
-                exportCSV()
-            }
+            HStack {
+                Button("Export Logs as CSV…") {
+                    exportCSV()
+                }
 
-            Button("Quit Rezodoro") {
-                NSApplication.shared.terminate(nil)
+                Spacer()
+
+                Button("Quit Rezodoro") {
+                    NSApplication.shared.terminate(nil)
+                }
             }
         }
         .padding(14)
