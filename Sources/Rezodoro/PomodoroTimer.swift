@@ -14,6 +14,11 @@ final class PomodoroTimer: ObservableObject {
     @Published private(set) var isRunning: Bool = false
     @Published private(set) var completedFocusSessions: Int = 0
 
+    /// Completed (not skipped) focus sessions since the last long break.
+    /// Resets to 0 every time a long break is taken, so it always counts
+    /// actual focus sessions only — short breaks never advance it.
+    private var focusSessionsSinceLongBreak: Int = 0
+
     private var timer: Timer?
     private var sessionStartedAt: Date?
     private let log = LogStore()
@@ -116,6 +121,11 @@ final class PomodoroTimer: ObservableObject {
 
         if currentKind == .focus {
             completedFocusSessions += 1
+            // Only a fully completed (not skipped) focus session counts
+            // toward the long-break threshold.
+            if completed {
+                focusSessionsSinceLongBreak += 1
+            }
         }
 
         notify(finishedKind: currentKind, completed: completed)
@@ -127,8 +137,9 @@ final class PomodoroTimer: ObservableObject {
     private func advance() {
         switch currentKind {
         case .focus:
-            if completedFocusSessions > 0 && completedFocusSessions % sessionsUntilLongBreak == 0 {
+            if focusSessionsSinceLongBreak >= sessionsUntilLongBreak {
                 currentKind = .longBreak
+                focusSessionsSinceLongBreak = 0
             } else {
                 currentKind = .shortBreak
             }
