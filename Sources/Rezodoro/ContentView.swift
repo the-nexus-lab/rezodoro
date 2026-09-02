@@ -65,6 +65,9 @@ struct ContentView: View {
         }
         .padding(14)
         .frame(width: 260)
+        .onAppear {
+            timer.checkForNewDay()
+        }
     }
 
     private var timeString: String {

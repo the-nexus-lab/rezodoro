@@ -31,7 +31,11 @@ final class PomodoroTimer: ObservableObject {
     @Published private(set) var currentKind: SessionKind = .focus
     @Published private(set) var remainingSeconds: Int = 25 * 60
     @Published private(set) var isRunning: Bool = false
+    /// Sessions completed today (local calendar day) — the "#N" shown in
+    /// the UI. Rolls back to 0 at local midnight.
     @Published private(set) var completedFocusSessions: Int = 0
+
+    private var completedFocusSessionsDay: Date = Calendar.current.startOfDay(for: Date())
 
     /// Completed (not skipped) focus sessions since the last long break.
     /// Resets to 0 every time a long break is taken, so it always counts
@@ -91,6 +95,24 @@ final class PomodoroTimer: ObservableObject {
         remainingSeconds = plannedMinutes * 60
     }
 
+    /// Rolls the "#N completed today" counter back to 0 when the local
+    /// calendar day has changed since it was last touched. Cheap (one
+    /// Calendar comparison), so it's safe to call from any user-facing
+    /// entry point rather than needing a dedicated midnight timer.
+    private func rollOverDayIfNeeded() {
+        let today = Calendar.current.startOfDay(for: Date())
+        guard today != completedFocusSessionsDay else { return }
+        completedFocusSessionsDay = today
+        completedFocusSessions = 0
+    }
+
+    /// Called when the dropdown is opened, so the "#N" counter reflects a
+    /// local-midnight rollover immediately even if the app sat idle
+    /// overnight with no session activity to trigger the check otherwise.
+    func checkForNewDay() {
+        rollOverDayIfNeeded()
+    }
+
     private func logSettingChange(_ name: String, _ newValue: Int, _ oldValue: Int) {
         guard newValue != oldValue else { return }
         events.append(ActionEvent(type: .settingsChanged, settingName: name, settingValue: newValue))
@@ -111,6 +133,7 @@ final class PomodoroTimer: ObservableObject {
 
     func start() {
         guard !isRunning else { return }
+        rollOverDayIfNeeded()
         let isResuming = sessionStartedAt != nil
         if sessionStartedAt == nil {
             sessionStartedAt = Date()
@@ -172,6 +195,7 @@ final class PomodoroTimer: ObservableObject {
         events.append(currentEvent(completed ? .complete : .skip))
 
         if currentKind == .focus {
+            rollOverDayIfNeeded()
             completedFocusSessions += 1
             // Only a fully completed (not skipped) focus session counts
             // toward the long-break threshold.
