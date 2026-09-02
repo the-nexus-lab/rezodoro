@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:rezodoro}",
+            "name": "Debug Rezodoro",
+            "target": "Rezodoro",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug Rezodoro"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:rezodoro}",
+            "name": "Release Rezodoro",
+            "target": "Rezodoro",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release Rezodoro"
+        }
+    ]
+}
