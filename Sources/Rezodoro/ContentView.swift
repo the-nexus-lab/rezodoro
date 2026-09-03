@@ -16,7 +16,7 @@ struct ContentView: View {
                     .font(.caption)
             }
 
-            Text(timeString)
+            Text(timer.countdownText)
                 .font(.system(size: 40, weight: .medium, design: .rounded))
                 .monospacedDigit()
                 .frame(maxWidth: .infinity, alignment: .center)
@@ -68,12 +68,6 @@ struct ContentView: View {
         .onAppear {
             timer.checkForNewDay()
         }
-    }
-
-    private var timeString: String {
-        let m = timer.remainingSeconds / 60
-        let s = timer.remainingSeconds % 60
-        return String(format: "%02d:%02d", m, s)
     }
 
     private func exportCSV() {

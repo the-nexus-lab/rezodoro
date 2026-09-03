@@ -62,20 +62,11 @@ final class PomodoroTimer: ObservableObject {
         }
     }
 
-    var menuBarText: String {
+    /// "24:59" — shown next to the logo in the menu bar while running.
+    var countdownText: String {
         let m = remainingSeconds / 60
         let s = remainingSeconds % 60
-        let icon: String
-        switch currentKind {
-        case .focus: icon = "🍅"
-        case .shortBreak: icon = "☕️"
-        case .longBreak: icon = "🌿"
-        }
-        if isRunning {
-            return String(format: "%@ %02d:%02d", icon, m, s)
-        } else {
-            return "🍅"
-        }
+        return String(format: "%02d:%02d", m, s)
     }
 
     init() {

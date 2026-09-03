@@ -8,7 +8,10 @@ let package = Package(
         .executableTarget(
             name: "Rezodoro",
             path: "Sources/Rezodoro",
-            exclude: ["Info.plist"]
+            exclude: ["Info.plist", "Resources/AppIcon-source.png", "Resources/AppIcon.icns"],
+            resources: [
+                .copy("Resources/MenuBarIcon.png")
+            ]
         )
     ]
 )

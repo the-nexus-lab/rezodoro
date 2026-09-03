@@ -4,7 +4,8 @@ A tiny Pomodoro timer that lives in the macOS menu bar. No frills.
 
 ## Features
 
-- Focus / short break / long break timer, running in the menu bar (e.g. `🍅 24:59`)
+- Focus / short break / long break timer, running in the menu bar (Rezodoro
+  logo + a countdown, e.g. `24:59`, while a session is active)
 - All three interval lengths (and sessions-per-long-break) adjustable right in the dropdown
 - Every completed or skipped session is auto-logged to
   `~/Library/Application Support/Rezodoro/sessions.csv`
@@ -38,6 +39,16 @@ start at login, add it in System Settings → General → Login Items.
 ## Notes
 
 - It's a menu-bar-only app (no Dock icon) — quit it from the dropdown menu.
+- App icon assets live in `Sources/Rezodoro/Resources/`:
+  `AppIcon-source.png` is the original logo, `AppIcon.icns` is the compiled
+  app icon (referenced by `Info.plist`'s `CFBundleIconFile`), and
+  `MenuBarIcon.png` is a monochrome "template" silhouette derived from the
+  logo for the menu bar status item (template images auto-adapt to
+  light/dark menu bars). Regenerate `AppIcon.icns` with `iconutil` from a
+  fresh `.iconset` if the source logo changes.
+- Notification banners don't show the app icon — this is a macOS
+  limitation for `LSUIElement` (menu-bar-only) apps, not fixable via
+  Info.plist/codesign from here.
 - CSV log format: `kind,started_at,ended_at,planned_minutes,actual_minutes,completed`
 - Event log format (JSONL, one JSON object per line):
   `type, timestamp, sessionKind, plannedMinutes, remainingSeconds, settingName, settingValue`

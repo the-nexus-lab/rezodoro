@@ -18,6 +18,15 @@ mkdir -p "${APP_BUNDLE}/Contents/Resources"
 
 cp "${BIN_PATH}" "${APP_BUNDLE}/Contents/MacOS/${APP_NAME}"
 cp "Sources/${APP_NAME}/Info.plist" "${APP_BUNDLE}/Contents/Info.plist"
+cp "Sources/${APP_NAME}/Resources/AppIcon.icns" "${APP_BUNDLE}/Contents/Resources/AppIcon.icns"
+
+# SwiftPM's own resource bundle (Rezodoro_Rezodoro.bundle, holding
+# MenuBarIcon.png) also needs to travel into the app bundle so
+# Bundle.module can find it at runtime.
+RESOURCE_BUNDLE=".build/${CONFIG}/${APP_NAME}_${APP_NAME}.bundle"
+if [ -d "${RESOURCE_BUNDLE}" ]; then
+  cp -R "${RESOURCE_BUNDLE}" "${APP_BUNDLE}/Contents/Resources/"
+fi
 
 # Sign the bundle so macOS can verify its identity (required for
 # UserNotifications to register the app; an ad-hoc identity is free
