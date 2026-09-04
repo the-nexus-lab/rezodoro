@@ -33,9 +33,21 @@ private struct MenuBarLabel: View {
     }
 
     static let icon: NSImage = {
-        let image = Bundle.module.image(forResource: "MenuBarIcon") ?? NSImage()
-        image.isTemplate = true
-        image.size = NSSize(width: 12, height: image.size.height / image.size.width * 12)
-        return image
+        guard let image = Bundle.module.image(forResource: "MenuBarIcon") else {
+            return NSImage()
+        }
+        let targetWidth: CGFloat = 12
+        let aspect = image.size.height / image.size.width
+        let resized = NSImage(size: NSSize(width: targetWidth, height: targetWidth * aspect))
+        resized.lockFocus()
+        image.draw(
+            in: NSRect(origin: .zero, size: resized.size),
+            from: .zero,
+            operation: .sourceOver,
+            fraction: 1.0
+        )
+        resized.unlockFocus()
+        resized.isTemplate = true
+        return resized
     }()
 }

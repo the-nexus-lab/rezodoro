@@ -39,7 +39,7 @@ struct ContentView: View {
 
             Divider()
 
-            DisclosureGroup("Intervals", isExpanded: $showingSettings) {
+            DisclosureGroup(isExpanded: $showingSettings) {
                 VStack(alignment: .leading, spacing: 8) {
                     IntervalStepper(label: "Focus", minutes: $timer.focusMinutes, step: 5)
                     IntervalStepper(label: "Short Break", minutes: $timer.shortBreakMinutes, step: 5)
@@ -47,6 +47,12 @@ struct ContentView: View {
                     IntervalStepper(label: "Sessions / long break", minutes: $timer.sessionsUntilLongBreak, step: 1, suffix: "")
                 }
                 .padding(.top, 4)
+            } label: {
+                Text("Intervals")
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        showingSettings.toggle()
+                    }
             }
 
             Divider()

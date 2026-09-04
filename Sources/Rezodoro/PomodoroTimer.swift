@@ -90,11 +90,22 @@ final class PomodoroTimer: ObservableObject {
     /// calendar day has changed since it was last touched. Cheap (one
     /// Calendar comparison), so it's safe to call from any user-facing
     /// entry point rather than needing a dedicated midnight timer.
+    ///
+    /// A new day resets everything: the "#N today" badge, the long-break
+    /// progress, and the current session itself — so the app never sits
+    /// on a stale Short/Long Break carried over from the night before.
+    /// Only called from idle-time entry points (never mid-finishSession),
+    /// so it's safe to freely reset currentKind here.
     private func rollOverDayIfNeeded() {
         let today = Calendar.current.startOfDay(for: Date())
         guard today != completedFocusSessionsDay else { return }
         completedFocusSessionsDay = today
         completedFocusSessions = 0
+        focusSessionsSinceLongBreak = 0
+        if !isRunning {
+            currentKind = .focus
+            remainingSeconds = plannedMinutes * 60
+        }
     }
 
     /// Called when the dropdown is opened, so the "#N" counter reflects a
@@ -186,7 +197,6 @@ final class PomodoroTimer: ObservableObject {
         events.append(currentEvent(completed ? .complete : .skip))
 
         if currentKind == .focus {
-            rollOverDayIfNeeded()
             completedFocusSessions += 1
             // Only a fully completed (not skipped) focus session counts
             // toward the long-break threshold.
