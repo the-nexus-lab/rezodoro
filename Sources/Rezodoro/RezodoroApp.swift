@@ -36,7 +36,7 @@ private struct MenuBarLabel: View {
         guard let image = Bundle.module.image(forResource: "MenuBarIcon") else {
             return NSImage()
         }
-        let targetWidth: CGFloat = 12
+        let targetWidth: CGFloat = 10
         let aspect = image.size.height / image.size.width
         let resized = NSImage(size: NSSize(width: targetWidth, height: targetWidth * aspect))
         resized.lockFocus()
