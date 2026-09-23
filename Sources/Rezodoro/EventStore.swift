@@ -7,6 +7,7 @@ import Foundation
 ///
 /// Stored as JSONL (one JSON object per line) since events have varying
 /// shapes and this is meant for programmatic analysis, not manual reading.
+@MainActor
 final class EventStore {
     private let fileURL: URL
     private let encoder: JSONEncoder
@@ -28,11 +29,7 @@ final class EventStore {
     func append(_ event: ActionEvent) {
         guard var data = try? encoder.encode(event) else { return }
         data.append(0x0A) // newline
-        if let handle = try? FileHandle(forWritingTo: fileURL) {
-            defer { try? handle.close() }
-            handle.seekToEndOfFile()
-            handle.write(data)
-        }
+        FileAppender.append(data, to: fileURL)
     }
 
     var eventsFileURL: URL { fileURL }

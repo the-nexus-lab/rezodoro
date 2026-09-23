@@ -15,7 +15,14 @@ A tiny Pomodoro timer that lives in the macOS menu bar. No frills.
   `~/Library/Application Support/Rezodoro/events.jsonl` — a richer,
   background record for future usage analysis (idle gaps between
   sessions, skip/reset frequency, etc). Not shown in the CSV export.
-- System notification when a session ends
+- System notification when a session ends (scheduled with the system up
+  front, so it arrives on time even if the app is napping or the Mac just
+  woke up); clicking it opens the dropdown
+- Starting a session closes the dropdown
+- History: a hoverable bar chart of focus time per day for the last 10 days,
+  read from `sessions.csv`
+- Liquid Glass look on macOS 26+ (glass dropdown and buttons), with the
+  classic blurred-menu look on macOS 14–15
 
 ## Build & run
 
@@ -25,6 +32,11 @@ open .build/Rezodoro.app
 ```
 
 Use `./build.sh debug` for a debug build instead.
+
+Requires macOS 14 or later. Builds with just the Command Line Tools — on
+the macOS 27 SDK `@State` became a macro whose plugin only ships with
+Xcode, so the code uses the `ViewState` alias (see `ContentView.swift`)
+for the underlying property wrapper instead.
 
 ### Install to /Applications (optional)
 
@@ -39,6 +51,9 @@ start at login, add it in System Settings → General → Login Items.
 ## Notes
 
 - It's a menu-bar-only app (no Dock icon) — quit it from the dropdown menu.
+- The menu bar item is a plain `NSStatusItem` with a custom glass panel
+  (`MenuBarController.swift`) rather than SwiftUI's `MenuBarExtra`, because
+  `MenuBarExtra` can't be opened or closed from code.
 - App icon assets live in `Sources/Rezodoro/Resources/`:
   `AppIcon-source.png` is the original logo, `AppIcon.icns` is the compiled
   app icon (referenced by `Info.plist`'s `CFBundleIconFile`), and
