@@ -131,11 +131,42 @@ final class MenuBarController: NSObject, NSWindowDelegate {
 
     private static let titleFont = NSFont.monospacedDigitSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
 
-    /// SF Symbols are drawn to sit on the same center line as system text,
-    /// so the icon lines up with the countdown digits; as a template it
-    /// adapts to light/dark menu bars.
+    /// The Rezodoro "R" logo as a template image (so it adapts to
+    /// light/dark menu bars). Decoded once into plain bitmaps at 1x/2x/3x:
+    /// handing AppKit the PNG directly made every once-a-second redraw of
+    /// the status item re-decode the file.
+    ///
+    /// build.sh copies the PNG into the app's Resources; a bare `swift run`
+    /// binary has no bundle, so it falls back to an SF Symbol there.
     private static let icon: NSImage = {
-        let image = NSImage(systemSymbolName: "timer", accessibilityDescription: "Rezodoro") ?? NSImage()
+        guard let source = Bundle.main.image(forResource: "MenuBarIcon") else {
+            let fallback = NSImage(systemSymbolName: "timer", accessibilityDescription: "Rezodoro") ?? NSImage()
+            fallback.isTemplate = true
+            return fallback
+        }
+        // The source is trimmed tight to the glyph, so AppKit's vertical
+        // centering of the image lines it up with the countdown digits.
+        // Odd, like the digits' 9pt ink height, so both can center on the
+        // same pixel row on 1x displays.
+        let height: CGFloat = 15
+        let size = NSSize(width: (height * source.size.width / source.size.height).rounded(), height: height)
+        let image = NSImage(size: size)
+        for scale in [1, 2, 3] as [CGFloat] {
+            guard let rep = NSBitmapImageRep(
+                bitmapDataPlanes: nil,
+                pixelsWide: Int(size.width * scale), pixelsHigh: Int(size.height * scale),
+                bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+                colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0
+            ) else { continue }
+            rep.size = size
+            NSGraphicsContext.saveGraphicsState()
+            NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+            NSGraphicsContext.current?.imageInterpolation = .high
+            source.draw(in: NSRect(origin: .zero, size: size))
+            NSGraphicsContext.restoreGraphicsState()
+            image.addRepresentation(rep)
+        }
+        image.accessibilityDescription = "Rezodoro"
         image.isTemplate = true
         return image
     }()

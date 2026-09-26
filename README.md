@@ -4,8 +4,8 @@ A tiny Pomodoro timer that lives in the macOS menu bar. No frills.
 
 ## Features
 
-- Focus / short break / long break timer, running in the menu bar (timer
-  icon + a countdown, e.g. `24:59`, while a session is active)
+- Focus / short break / long break timer, running in the menu bar (Rezodoro
+  logo + a countdown, e.g. `24:59`, while a session is active)
 - All three interval lengths (and sessions-per-long-break) adjustable right in the dropdown
 - A rotating message of the day above the countdown (list in
   `MessageOfTheDay.swift`; switch interval adjustable in 6-hour steps)
@@ -85,9 +85,10 @@ start at login, add it in System Settings → General → Login Items.
   into the .app by `build.sh` (not a SwiftPM resource bundle, whose lookup
   only works from this machine's `.build`): `AppIcon-source.png` is the
   original logo, `AppIcon.icns` the compiled app icon (referenced by
-  `Info.plist`'s `CFBundleIconFile`), plus `PrivacyInfo.xcprivacy` and
-  `container-migration.plist`. The menu bar uses the `timer` SF Symbol,
-  which lines up with the countdown text. Regenerate `AppIcon.icns` with `iconutil`
+  `Info.plist`'s `CFBundleIconFile`), `MenuBarIcon.png` a monochrome
+  "template" silhouette trimmed tight to the glyph so it centers with the
+  countdown digits, plus `PrivacyInfo.xcprivacy` and
+  `container-migration.plist`. Regenerate `AppIcon.icns` with `iconutil`
   from a fresh `.iconset` if the source logo changes.
 - Notification banners don't show the app icon — this is a macOS
   limitation for `LSUIElement` (menu-bar-only) apps, not fixable via

@@ -52,6 +52,7 @@ mkdir -p "${APP_BUNDLE}/Contents/MacOS" "${APP_BUNDLE}/Contents/Resources"
 cp "${BIN_PATH}" "${APP_BUNDLE}/Contents/MacOS/${APP_NAME}"
 cp "${SRC}/Info.plist" "${APP_BUNDLE}/Contents/Info.plist"
 cp "${SRC}/Resources/AppIcon.icns" \
+   "${SRC}/Resources/MenuBarIcon.png" \
    "${SRC}/Resources/PrivacyInfo.xcprivacy" \
    "${SRC}/Resources/container-migration.plist" \
    "${APP_BUNDLE}/Contents/Resources/"

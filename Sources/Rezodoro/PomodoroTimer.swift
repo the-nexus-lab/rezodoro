@@ -87,7 +87,7 @@ final class PomodoroTimer {
         }
     }
 
-    /// "24:59" — shown next to the icon in the menu bar while running.
+    /// "24:59" — shown next to the logo in the menu bar while running.
     var countdownText: String {
         let m = remainingSeconds / 60
         let s = remainingSeconds % 60
