@@ -12,24 +12,31 @@ final class PomodoroTimer {
     var focusMinutes: Int = 25 {
         didSet {
             resetIfIdle()
-            logSettingChange("focusMinutes", focusMinutes, oldValue)
+            saveSetting("focusMinutes", focusMinutes, oldValue)
         }
     }
     var shortBreakMinutes: Int = 5 {
         didSet {
             resetIfIdle()
-            logSettingChange("shortBreakMinutes", shortBreakMinutes, oldValue)
+            saveSetting("shortBreakMinutes", shortBreakMinutes, oldValue)
         }
     }
     var longBreakMinutes: Int = 15 {
         didSet {
             resetIfIdle()
-            logSettingChange("longBreakMinutes", longBreakMinutes, oldValue)
+            saveSetting("longBreakMinutes", longBreakMinutes, oldValue)
         }
     }
     var sessionsUntilLongBreak: Int = 4 {
         didSet {
-            logSettingChange("sessionsUntilLongBreak", sessionsUntilLongBreak, oldValue)
+            saveSetting("sessionsUntilLongBreak", sessionsUntilLongBreak, oldValue)
+        }
+    }
+
+    /// How long each message of the day stays up before the next one.
+    var messageIntervalHours: Int = 12 {
+        didSet {
+            saveSetting("messageIntervalHours", messageIntervalHours, oldValue)
         }
     }
 
@@ -80,7 +87,7 @@ final class PomodoroTimer {
         }
     }
 
-    /// "24:59" — shown next to the logo in the menu bar while running.
+    /// "24:59" — shown next to the icon in the menu bar while running.
     var countdownText: String {
         let m = remainingSeconds / 60
         let s = remainingSeconds % 60
@@ -95,6 +102,13 @@ final class PomodoroTimer {
                 print("Rezodoro: notification authorization granted = \(granted)")
             }
         }
+        // Assignments in init don't trigger didSet, so loading neither
+        // re-saves nor logs a settings change.
+        focusMinutes = Self.savedSetting("focusMinutes", default: focusMinutes, in: 5...180)
+        shortBreakMinutes = Self.savedSetting("shortBreakMinutes", default: shortBreakMinutes, in: 5...180)
+        longBreakMinutes = Self.savedSetting("longBreakMinutes", default: longBreakMinutes, in: 5...180)
+        sessionsUntilLongBreak = Self.savedSetting("sessionsUntilLongBreak", default: sessionsUntilLongBreak, in: 1...180)
+        messageIntervalHours = Self.savedSetting("messageIntervalHours", default: messageIntervalHours, in: 6...168)
         remainingSeconds = focusMinutes * 60
         events.append(ActionEvent(type: .appLaunched))
     }
@@ -134,9 +148,20 @@ final class PomodoroTimer {
         rollOverDayIfNeeded()
     }
 
-    private func logSettingChange(_ name: String, _ newValue: Int, _ oldValue: Int) {
+    /// Persists a changed setting (so it survives relaunches) and logs it.
+    private func saveSetting(_ name: String, _ newValue: Int, _ oldValue: Int) {
         guard newValue != oldValue else { return }
+        UserDefaults.standard.set(newValue, forKey: name)
         events.append(ActionEvent(type: .settingsChanged, settingName: name, settingValue: newValue))
+    }
+
+    /// A previously saved setting, or `defaultValue` if there is none or
+    /// it's outside the range the dropdown's stepper allows.
+    private static func savedSetting(_ name: String, default defaultValue: Int, in range: ClosedRange<Int>) -> Int {
+        guard let value = UserDefaults.standard.object(forKey: name) as? Int, range.contains(value) else {
+            return defaultValue
+        }
+        return value
     }
 
     /// Logs the quit and withdraws any pending "complete" banner, so it

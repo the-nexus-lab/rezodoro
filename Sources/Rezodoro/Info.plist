@@ -9,7 +9,7 @@
     <key>CFBundleIdentifier</key>
     <string>com.rezodoro.app</string>
     <key>CFBundleVersion</key>
-    <string>1.0</string>
+    <string>1</string>
     <key>CFBundleShortVersionString</key>
     <string>1.0</string>
     <key>CFBundlePackageType</key>
@@ -25,6 +25,10 @@
     <key>NSHighResolutionCapable</key>
     <true/>
     <key>NSHumanReadableCopyright</key>
-    <string>Rezodoro</string>
+    <string>© 2026 Reza Taheri</string>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.productivity</string>
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
 </dict>
 </plist>

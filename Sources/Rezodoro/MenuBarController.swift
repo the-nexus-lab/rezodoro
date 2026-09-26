@@ -12,6 +12,11 @@ final class MenuBarController: NSObject, NSWindowDelegate {
     private let timer: PomodoroTimer
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private var panel: DropdownPanel?
+    /// The dropdown's SwiftUI content, kept alive between openings (so
+    /// expanded sections stay expanded) but detached from the panel while
+    /// it's closed, so the per-second countdown doesn't lay out a window
+    /// nobody can see.
+    private var content: NSView?
     private var outsideClickMonitor: Any?
 
     init(timer: PomodoroTimer) {
@@ -42,6 +47,7 @@ final class MenuBarController: NSObject, NSWindowDelegate {
 
         let panel = self.panel ?? makePanel()
         self.panel = panel
+        panel.contentView = content ?? makeContent()
 
         // Hang the panel just below the status item, left-aligned with it
         // like a menu, but kept fully on screen. The window itself is a
@@ -69,6 +75,7 @@ final class MenuBarController: NSObject, NSWindowDelegate {
     func close() {
         guard isOpen else { return }
         panel?.orderOut(nil)
+        panel?.contentView = nil
         statusItem.button?.highlight(false)
         if let outsideClickMonitor {
             NSEvent.removeMonitor(outsideClickMonitor)
@@ -80,15 +87,18 @@ final class MenuBarController: NSObject, NSWindowDelegate {
         close()
     }
 
-    private func makePanel() -> DropdownPanel {
+    private func makeContent() -> NSView {
         let hosting = NSHostingView(rootView: PanelRoot(
             content: ContentView(timer: timer, dismiss: { [weak self] in self?.close() })
         ))
         // The window size is ours to set; don't let SwiftUI's size push back.
         hosting.sizingOptions = []
+        content = hosting
+        return hosting
+    }
 
+    private func makePanel() -> DropdownPanel {
         let panel = DropdownPanel()
-        panel.contentView = hosting
         panel.delegate = self
         panel.onCancel = { [weak self] in self?.close() }
         return panel
@@ -121,32 +131,11 @@ final class MenuBarController: NSObject, NSWindowDelegate {
 
     private static let titleFont = NSFont.monospacedDigitSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
 
-    /// The Rezodoro logo as a template image (so it adapts to light/dark
-    /// menu bars). Decoded once into plain bitmaps at 1x/2x/3x: handing
-    /// AppKit the PNG directly made every once-a-second redraw of the
-    /// status item re-decode the file.
+    /// SF Symbols are drawn to sit on the same center line as system text,
+    /// so the icon lines up with the countdown digits; as a template it
+    /// adapts to light/dark menu bars.
     private static let icon: NSImage = {
-        guard let source = Bundle.module.image(forResource: "MenuBarIcon") else {
-            return NSImage()
-        }
-        let width: CGFloat = 10
-        let size = NSSize(width: width, height: (width * source.size.height / source.size.width).rounded())
-        let image = NSImage(size: size)
-        for scale in [1, 2, 3] as [CGFloat] {
-            guard let rep = NSBitmapImageRep(
-                bitmapDataPlanes: nil,
-                pixelsWide: Int(size.width * scale), pixelsHigh: Int(size.height * scale),
-                bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
-                colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0
-            ) else { continue }
-            rep.size = size
-            NSGraphicsContext.saveGraphicsState()
-            NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
-            NSGraphicsContext.current?.imageInterpolation = .high
-            source.draw(in: NSRect(origin: .zero, size: size))
-            NSGraphicsContext.restoreGraphicsState()
-            image.addRepresentation(rep)
-        }
+        let image = NSImage(systemSymbolName: "timer", accessibilityDescription: "Rezodoro") ?? NSImage()
         image.isTemplate = true
         return image
     }()

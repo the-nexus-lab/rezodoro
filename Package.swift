@@ -8,10 +8,10 @@ let package = Package(
         .executableTarget(
             name: "Rezodoro",
             path: "Sources/Rezodoro",
-            exclude: ["Info.plist", "Resources/AppIcon-source.png", "Resources/AppIcon.icns"],
-            resources: [
-                .copy("Resources/MenuBarIcon.png")
-            ]
+            // Bundle files, copied into the .app by build.sh rather than
+            // shipped as a SwiftPM resource bundle (whose generated lookup
+            // only works from this machine's .build directory).
+            exclude: ["Info.plist", "Rezodoro.entitlements", "Resources"]
         )
     ]
 )
