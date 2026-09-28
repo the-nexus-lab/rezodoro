@@ -39,21 +39,21 @@ struct ContentView: View {
                           systemImage: timer.isRunning ? "pause.fill" : "play.fill")
                 }
                 .keyboardShortcut(.defaultAction)
-                .buttonStyle(GlassPillButtonStyle(tint: timer.isRunning ? .blue : .green))
+                .buttonStyle(GlassPillButtonStyle(hoverTint: timer.isRunning ? .blue : .green))
 
                 Button {
                     timer.reset()
                 } label: {
                     Label("Reset", systemImage: "arrow.counterclockwise")
                 }
-                .buttonStyle(GlassPillButtonStyle(tint: .gray))
+                .buttonStyle(GlassPillButtonStyle())
 
                 Button {
                     timer.skip()
                 } label: {
                     Label("Skip", systemImage: "forward.end.fill")
                 }
-                .buttonStyle(GlassPillButtonStyle(tint: .gray))
+                .buttonStyle(GlassPillButtonStyle())
             }
             .labelStyle(.titleAndIcon)
 
@@ -87,14 +87,14 @@ struct ContentView: View {
                 } label: {
                     Label("Export CSV…", systemImage: "square.and.arrow.up")
                 }
-                .buttonStyle(GlassPillButtonStyle(tint: .gray))
+                .buttonStyle(GlassPillButtonStyle())
 
                 Button {
                     NSApplication.shared.terminate(nil)
                 } label: {
                     Label("Quit", systemImage: "power")
                 }
-                .buttonStyle(GlassPillButtonStyle(tint: .gray))
+                .buttonStyle(GlassPillButtonStyle())
             }
             .labelStyle(.titleAndIcon)
             .controlSize(.small)
@@ -190,25 +190,29 @@ struct IntervalStepper: View {
 }
 
 /// The one button look used across the dropdown: a full-width capsule of
-/// clear Liquid Glass (macOS 26+) lightly tinted, the tint turning vivid on
-/// hover. Buttons in a row share its width equally, so they match in size.
+/// clear, interactive Liquid Glass (macOS 26+). Every button has the same
+/// light gray tint at rest; only the deep `hoverTint` sets them apart.
+/// Buttons in a row share its width equally, so they match in size.
 struct GlassPillButtonStyle: ButtonStyle {
-    let tint: Color
+    var hoverTint: Color = .gray
 
     func makeBody(configuration: Configuration) -> some View {
-        GlassPill(configuration: configuration, tint: tint)
+        GlassPill(configuration: configuration, hoverTint: hoverTint)
     }
 }
 
 private struct GlassPill: View {
     let configuration: ButtonStyleConfiguration
-    let tint: Color
+    let hoverTint: Color
     @Environment(\.controlSize) private var controlSize
     @ViewState private var hovering = false
 
     private var isSmall: Bool { controlSize == .small || controlSize == .mini }
-    private var tintOpacity: Double {
-        configuration.isPressed ? 0.75 : hovering ? 0.55 : 0.18
+    private var isActive: Bool { hovering || configuration.isPressed }
+
+    private var currentTint: Color {
+        guard isActive else { return Color.gray.opacity(0.18) }
+        return Self.darkened(hoverTint).opacity(configuration.isPressed ? 0.95 : 0.8)
     }
 
     var body: some View {
@@ -218,6 +222,8 @@ private struct GlassPill: View {
             .padding(.vertical, isSmall ? 7 : 9)
             .padding(.horizontal, 8)
             .frame(maxWidth: .infinity)
+            // Keeps the label readable on the deep hover tint.
+            .foregroundStyle(isActive ? AnyShapeStyle(.white) : AnyShapeStyle(.primary))
             .contentShape(.capsule)
             .background { background }
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
@@ -230,11 +236,20 @@ private struct GlassPill: View {
     private var background: some View {
         if #available(macOS 26, *) {
             Color.clear
-                .glassEffect(.clear.tint(tint.opacity(tintOpacity)), in: .capsule)
+                .glassEffect(.clear.tint(currentTint).interactive(), in: .capsule)
         } else {
             Capsule()
-                .fill(tint.opacity(tintOpacity))
+                .fill(currentTint)
                 .overlay(Capsule().strokeBorder(.white.opacity(0.2)))
+        }
+    }
+
+    /// A deeper shade of `color` for the hover state.
+    private static func darkened(_ color: Color) -> Color {
+        if #available(macOS 15, *) {
+            color.mix(with: .black, by: 0.25)
+        } else {
+            color
         }
     }
 }
